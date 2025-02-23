@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
+    <h2 class="text-3xl font-semibold text-gray-800 text-center mb-6">Calorie & Nutrition Tracker</h2>
+<!-- Today's Nutrient Intake -->
+<div class="mt-6 p-6 bg-white/30 backdrop-blur-md rounded-2xl shadow-lg text-center border border-gray-200">
+    <h3 class="text-2xl font-bold text-gray-800 mb-2">Today's Intake</h3>
+    
+    <div class="grid grid-cols-2 gap-4 text-lg font-medium">
+        <div class="p-3 rounded-lg bg-gradient-to-r from-blue-100 to-blue-50 shadow">
+            <p class="text-gray-700">Calories</p>
+            <p class="text-xl font-semibold text-blue-600">{{ total_calories|round(2) }} kcal</p>
+        </div>
+        <div class="p-3 rounded-lg bg-gradient-to-r from-green-100 to-green-50 shadow">
+            <p class="text-gray-700">Protein</p>
+            <p class="text-xl font-semibold text-green-600">{{ total_protein|round(2) }} g</p>
+        </div>
+        <div class="p-3 rounded-lg bg-gradient-to-r from-yellow-100 to-yellow-50 shadow">
+            <p class="text-gray-700">Carbs</p>
+            <p class="text-xl font-semibold text-yellow-600">{{ total_carbs|round(2) }} g</p>
+        </div>
+        <div class="p-3 rounded-lg bg-gradient-to-r from-red-100 to-red-50 shadow">
+            <p class="text-gray-700">Fat</p>
+            <p class="text-xl font-semibold text-red-600">{{ total_fat|round(2) }} g</p>
+        </div>
+    </div>
+</div>
+
+<br>
+    <!-- Search Food Input -->
+    <div class="relative">
+        <label for="food_item" class="block text-gray-800 font-medium">Search for Food Item :</label>
+        <input type="text" id="search" placeholder="Search food..." 
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        
+        <!-- Food Selection Dropdown -->
+        <div id="food-dropdown" class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+            {% for food, data in food_data.items() %}
+            <div class="p-2 cursor-pointer hover:bg-gray-200 select-none food-option"
+                data-value="{{ food }}" data-calories="{{ data.calories }}"
+                data-protein="{{ data.protein }}" data-carbs="{{ data.carbs }}"
+                data-fat="{{ data.fats }}">
+                {{ food }} ({{ data.calories }} kcal per 100g)
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <form method="POST" id="food-form" class="space-y-4 mt-4">
+        <input type="hidden" id="food_item" name="food_item" required>
+
+        <div>
+            <label for="quantity" class="block text-gray-700 font-medium">Quantity (g):</label>
+            <input type="number" id="quantity" name="quantity" step="0.1" min="0" required 
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="p-6 bg-white/30 backdrop-blur-md rounded-2xl shadow-lg text-center border border-gray-200">
+            <h3 class="text-xl font-bold text-gray-800 mb-3">Nutrition Info</h3>
+        
+            <div class="grid grid-cols-2 gap-4 text-lg font-medium">
+                <div class="p-3 rounded-lg bg-gradient-to-r from-blue-100 to-blue-50 shadow">
+                    <p class="text-gray-700">Calories</p>
+                    <p class="text-xl font-semibold text-blue-600"><span id="calculated_calories">0</span> kcal</p>
+                </div>
+                <div class="p-3 rounded-lg bg-gradient-to-r from-green-100 to-green-50 shadow">
+                    <p class="text-gray-700">Protein</p>
+                    <p class="text-xl font-semibold text-green-600"><span id="calculated_protein">0</span> g</p>
+                </div>
+                <div class="p-3 rounded-lg bg-gradient-to-r from-yellow-100 to-yellow-50 shadow">
+                    <p class="text-gray-700">Carbs</p>
+                    <p class="text-xl font-semibold text-yellow-600"><span id="calculated_carbs">0</span> g</p>
+                </div>
+                <div class="p-3 rounded-lg bg-gradient-to-r from-red-100 to-red-50 shadow">
+                    <p class="text-gray-700">Fat</p>
+                    <p class="text-xl font-semibold text-red-600"><span id="calculated_fat">0</span> g</p>
+                </div>
+            </div>
+        </div>
+        
+
+        <button type="submit" 
+            class="w-full bg-cyan-600 text-white py-2 rounded-lg hover:bg-cyan-700 transition">
+            Add Food
+        </button>
+    </form>
+
+    
+
+    <!-- User Entries -->
+    <h3 class="text-lg font-semibold mt-6 text-gray-800 text-center">Your Entries</h3>
+    <ul class="mt-3 space-y-3">
+        {% for entry in entries %}
+        <li class="p-4 bg-gray-100 rounded-lg shadow-md flex justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">{{ entry.date_logged.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p class="font-semibold">{{ entry.food_item }} ({{ entry.quantity }}g)</p>
+                <p class="text-sm text-gray-700">
+                    {{ entry.calories|round(2) }} kcal, {{ entry.protein|round(2) }}g protein, 
+                    {{ entry.carbs|round(2) }}g carbs, {{ entry.fat|round(2) }}g fat
+                </p>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let searchInput = document.getElementById("search");
+    let dropdown = document.getElementById("food-dropdown");
+    let foodItemInput = document.getElementById("food_item");
+    let quantityInput = document.getElementById("quantity");
+    let caloriesDisplay = document.getElementById("calculated_calories");
+    let proteinDisplay = document.getElementById("calculated_protein");
+    let carbsDisplay = document.getElementById("calculated_carbs");
+    let fatDisplay = document.getElementById("calculated_fat");
+
+    function updateNutrition() {
+        let selectedOption = dropdown.querySelector(".selected");
+        if (!selectedOption) return;
+
+        let quantity = parseFloat(quantityInput.value) || 0;
+        let caloriesPer100g = parseFloat(selectedOption.getAttribute("data-calories")) || 0;
+        let proteinPer100g = parseFloat(selectedOption.getAttribute("data-protein")) || 0;
+        let carbsPer100g = parseFloat(selectedOption.getAttribute("data-carbs")) || 0;
+        let fatPer100g = parseFloat(selectedOption.getAttribute("data-fat")) || 0;
+
+        caloriesDisplay.textContent = ((caloriesPer100g * quantity) / 100).toFixed(2);
+        proteinDisplay.textContent = ((proteinPer100g * quantity) / 100).toFixed(2);
+        carbsDisplay.textContent = ((carbsPer100g * quantity) / 100).toFixed(2);
+        fatDisplay.textContent = ((fatPer100g * quantity) / 100).toFixed(2);
+    }
+
+    function filterFoodItems() {
+        let filter = searchInput.value.toLowerCase();
+        let options = dropdown.querySelectorAll(".food-option");
+        let found = false;
+
+        options.forEach(option => {
+            let text = option.textContent.toLowerCase();
+            if (text.includes(filter)) {
+                option.style.display = "block";
+                found = true;
+            } else {
+                option.style.display = "none";
+            }
+        });
+
+        dropdown.style.display = found ? "block" : "none";
+    }
+
+    dropdown.addEventListener("click", function (event) {
+        if (event.target.classList.contains("food-option")) {
+            let selectedFood = event.target.getAttribute("data-value");
+            searchInput.value = selectedFood;
+            foodItemInput.value = selectedFood;
+            
+            dropdown.querySelectorAll(".food-option").forEach(opt => opt.classList.remove("selected"));
+            event.target.classList.add("selected");
+            
+            dropdown.style.display = "none";
+            updateNutrition();
+        }
+    });
+
+    searchInput.addEventListener("input", filterFoodItems);
+    quantityInput.addEventListener("input", updateNutrition);
+
+    document.addEventListener("click", function (event) {
+        if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = "none";
+        }
+    });
+});
+</script>
+{% endblock %}

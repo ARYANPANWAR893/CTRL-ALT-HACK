@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Vaibhav UBI{% endblock %}
+
+{% block content %}
+    <!-- Profile Card -->
+    <div class="relative bg-gradient-to-r from-cyan-600 to-teal-600 rounded-xl p-6 shadow-lg text-white m-2 max-w-[450px] mx-auto">
+        <div class="flex items-center space-x-4">
+            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" 
+                 alt="User Profile" 
+                 class="w-16 h-16 rounded-full border-2 border-gray-300 shadow-md">
+            
+            <div>
+                <h2 class="text-xl font-bold">{{ user.name }}</h2>
+                <p class="text-sm">{{ user.email }}</p>
+                <p class="text-sm">{{ user.phone if user.phone else 'Not provided' }}</p>
+            </div>
+        </div>
+    
+        <!-- Vaibhav ID Section -->
+        <h3 class="text-lg font-semibold mt-4">Unique Blockchain Identifier</h3>
+        
+        <div class="mt-4 bg-white text-gray-900 p-3 rounded-lg text-center font-mono text-sm tracking-wide break-words shadow-inner relative">
+            <span id="vaibhavCode" class="blur-sm select-none">{{ user.vaibhav_code }}</span>
+            <button onclick="copyVaibhavCode()" class="absolute right-2 top-2 bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">
+                Copy
+            </button>
+        </div>
+    
+        <div class="flex justify-between mt-6 text-xs">
+            <span>Blockchain Secured</span>
+            <span class="font-bold">Vaibhav ID</span>
+        </div>
+    </div>
+    
+    <script>
+        function copyVaibhavCode() {
+            const codeElement = document.getElementById("vaibhavCode");
+            const text = codeElement.innerText;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(text)
+        }
+    </script>    
+
+    <br>
+
+   <!-- Access Requests & Granted Access Section -->
+<div class="container max-w-[500px] mx-auto">
+    <div class="row g-3">
+        <!-- Received Requests Section -->
+        <div class="col-lg-6 col-md-12">
+            <div class="p-4 rounded-xl shadow-lg bg-white m-2 border">
+                <h4 class="mb-3 text-danger font-extrabold">📥 Received Access Requests</h4>
+                {% if received_requests %}
+                    <ul class="list-group">
+                        {% for request in received_requests %}
+                            <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center border-0 shadow-sm rounded-lg mb-2 p-3">
+                                <!-- Name and Identifier -->
+                                <div class="mb-2 mb-md-0">
+                                    <strong class="text-dark">{{ request.full_name }}</strong> 
+                                    <small class="text-muted">({{ request.identifier_type }}: {{ request.identifier_value }})</small>
+                                </div>
+
+                                <!-- Buttons (Stacked on mobile, inline on larger screens) -->
+                                <div class="d-flex flex-column flex-sm-row gap-2">
+                                    <form action="{{ url_for('routes.accept_request', request_id=request.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-success btn-sm px-3 rounded-pill shadow w-100 w-sm-auto">
+                                            ✅ Accept
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('routes.reject_request', request_id=request.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger btn-sm px-3 rounded-pill shadow w-100 w-sm-auto">
+                                            ❌ Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted text-center">No pending access requests.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Granted Access Section -->
+        <div class="col-lg-6 col-md-12">
+            <div class="p-4 rounded-xl shadow-lg bg-white m-2 border">
+                <h4 class="mb-3 text-success font-extrabold">🔓 Granted Access</h4>
+                {% if granted_access %}
+                    <ul class="list-group">
+                        {% for request in granted_access %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-1 shadow-lg rounded-lg mb-2 p-5">
+                                <a href="/user_data/{{request.recipient_id}}" class="text-decoration-none text-primary fw-bold">
+                                    📄 View <strong>{{ request.full_name }}</strong>'s Medical Data
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted text-center">You don't have access to any user's data yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Request Medical Data Form -->
+    <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-10">
+        <h2 class="text-2xl font-bold text-gray-700 text-center mb-4">Request Medical Data</h2>
+        <p class="text-gray-600 text-center mb-6">
+            Enter the Full Name and provide an identifier (Email ID, Aadhaar, or Phone Number) 
+            to request access to a person's medical data.
+        </p>
+
+        <form method="POST" action="/request_access" class="space-y-6">
+            <!-- Full Name -->
+            <div>
+                <label class="block text-gray-600 font-medium">Full Name</label>
+                <input type="text" name="full_name" required
+                    class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter Full Name">
+            </div>
+
+            <!-- Selection Dropdown -->
+            <div>
+                <label class="block text-gray-600 font-medium">Identifier Type</label>
+                <select name="identifier_type" required
+                    class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>Select Identifier Type</option>
+                    <option value="email">Email ID</option>
+                    <option value="aadhaar">Aadhaar Card</option>
+                    <option value="phone">Phone Number</option>
+                </select>
+            </div>
+
+            <!-- Identifier Input -->
+            <div>
+                <label class="block text-gray-600 font-medium">Enter Identifier</label>
+                <input type="text" name="identifier_value" required
+                    class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter Email, Aadhaar, or Phone">
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit"
+                class="w-full bg-cyan-600 text-white font-medium p-4 rounded-lg hover:bg-cyan-700 transition">
+                Submit Request
+            </button>
+        </form>
+    </div>
+
+{% endblock %}

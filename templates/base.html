@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vaibhav UBI{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+
+    <!-- Top Bar -->
+    <h1 class="relative left-0 top-0 text-3xl min-w-screen bg-black text-white p-6 font-extrabold text-center">
+        Vaibhav UBI
+    </h1>
+
+    <!-- Logout Button -->
+    <a href="/logout"
+        class="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition">
+        Logout
+    </a>
+
+    <!-- Page Content -->
+    <div class="content p-4">
+        {% block content %}{% endblock %}
+    </div>
+    <br><br><br><br>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 left-0 w-full bg-black shadow-lg border-t border-gray-700 py-6">
+        <div class="flex justify-around items-center">
+            <!-- Home -->
+            <!-- Home -->
+            <a href="/dashboard" class="flex flex-col items-center text-gray-100 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M3 10v10a1 1 0 001 1h6v-7h4v7h6a1 1 0 001-1V10l-9-7-9 7z" />
+                </svg>
+                <span class="text-xs">Home</span>
+            </a>
+
+
+            <!-- Calorie Tracker -->
+            <!-- Calorie Tracker -->
+            <a href="/calories" class="flex flex-col items-center text-gray-100 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C8.13 2 5 5.48 5 9.5c0 2.98 1.5 5.36 3.57 7.26 1.29 1.14.68 2.74.05 3.5-.75.91 1.18 1.44 1.92.57.69-.82 1.16-1.59 1.46-2.43.3.84.77 1.61 1.46 2.43.74.87 2.67.34 1.92-.57-.63-.76-1.24-2.36.05-3.5C17.5 14.86 19 12.48 19 9.5 19 5.48 15.87 2 12 2z" />
+                </svg>
+                <span class="text-xs">Calories</span>
+            </a>
+
+
+            <!-- Gym -->
+            <a href="/gym" class="flex flex-col items-center text-gray-100 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M4 10H2v4h2v2a2 2 0 002 2h2v-2H6v-6h2V8H6a2 2 0 00-2 2v2zm16 0h2v4h-2v2a2 2 0 01-2 2h-2v-2h2v-6h-2V8h2a2 2 0 012 2v2zM9 16h6V8H9v8z" />
+                </svg>
+                <span class="text-xs">Gym</span>
+            </a>
+
+        </div>
+    </div>
+
+
+</body>
+
+</html>

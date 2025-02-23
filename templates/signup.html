@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+    <div class="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
+        <h2 class="text-2xl font-bold text-center mb-6">Signup</h2>
+        
+        <form method="POST" id="signup-form">
+            <div class="step step-1">
+                <input type="text" name="name" placeholder="Full Name" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="email" name="email" placeholder="Email" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="password" name="password" placeholder="Password" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="text" name="phone" placeholder="Phone Number" required 
+                    class="w-full p-2 border rounded mb-4">
+                <button type="button" class="next-step w-full bg-blue-500 text-white p-2 rounded">Next</button>
+            </div>
+
+            <div class="step step-2 hidden">
+                <input type="number" name="age" placeholder="Age" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="text" name="country" placeholder="Country" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="text" name="state" placeholder="State" required 
+                    class="w-full p-2 border rounded mb-4">
+                <button type="button" class="prev-step w-full bg-gray-400 text-white p-2 rounded mb-2">Back</button>
+                <button type="button" class="next-step w-full bg-blue-500 text-white p-2 rounded">Next</button>
+            </div>
+
+            <div class="step step-3 hidden">
+                <input type="text" name="height" placeholder="Height" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="text" name="weight" placeholder="Weight" required 
+                    class="w-full p-2 border rounded mb-4">
+                <input type="text" name="blood_group" placeholder="Blood Group" required 
+                    class="w-full p-2 border rounded mb-4">
+                <button type="button" class="prev-step w-full bg-gray-400 text-white p-2 rounded mb-2">Back</button>
+                <button type="button" class="next-step w-full bg-blue-500 text-white p-2 rounded">Next</button>
+            </div>
+
+            <div class="step step-4 hidden">
+                <select name="alcohol" required class="w-full p-2 border rounded mb-4">
+                    <option value="">Alcohol?</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+                <select name="smoking" required class="w-full p-2 border rounded mb-4">
+                    <option value="">Smoking?</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+                <input type="text" name="id_card" placeholder="Aadhaar" required 
+                    class="w-full p-2 border rounded mb-4">
+                <button type="button" class="prev-step w-full bg-gray-400 text-white p-2 rounded mb-2">Back</button>
+                <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Signup</button>
+            </div>
+        </form>
+        
+        <p class="text-center mt-4">
+            Already have an account? <a href="{{ url_for('auth.login') }}" class="text-blue-500">Login</a>
+        </p>
+    </div>
+
+    <script>
+        const steps = document.querySelectorAll('.step');
+        let currentStep = 0;
+
+        document.querySelectorAll('.next-step').forEach(button => {
+            button.addEventListener('click', () => {
+                steps[currentStep].classList.add('hidden');
+                currentStep++;
+                steps[currentStep].classList.remove('hidden');
+            });
+        });
+
+        document.querySelectorAll('.prev-step').forEach(button => {
+            button.addEventListener('click', () => {
+                steps[currentStep].classList.add('hidden');
+                currentStep--;
+                steps[currentStep].classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

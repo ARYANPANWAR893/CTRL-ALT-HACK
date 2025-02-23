@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+    <!-- Profile Card -->
+    <div class="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-24"></div>
+        <div class="p-6 -mt-12 flex items-center">
+            <div
+                class="w-24 h-24 bg-gray-300 rounded-full border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-gray-700">
+                {{ user.name[0] }}
+            </div>
+            <div class="ml-4">
+                <br>
+                <h2 class="text-2xl font-semibold text-gray-800">{{ user.name }}</h2>
+                <p class="text-gray-500">{{ user.email }}</p>
+            </div>
+        </div>
+        <div class="p-6 grid grid-cols-2 md:grid-cols-3 gap-4 border-t">
+            <div class="flex flex-col items-center">
+                <span class="text-lg font-semibold">{{ user.age }}</span>
+                <span class="text-gray-500 text-sm">Age</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-lg font-semibold">{{ user.height }} feet</span>
+                <span class="text-gray-500 text-sm">Height</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-lg font-semibold">{{ user.weight }} kg</span>
+                <span class="text-gray-500 text-sm">Weight</span>
+            </div>
+            <div class="flex flex-col items-center">
+                {% set height_ft = user.height | float if user.height.replace('.', '').isnumeric() else 0 %}
+                {% set weight_kg = user.weight | float if user.weight.replace('.', '').isnumeric() else 0 %}
+                {% set height_m = height_ft * 0.3048 %}
+                {% set bmi = (weight_kg / (height_m * height_m)) if height_m > 0 else "N/A" %}
+
+                {% set bmi_category = "" %}
+                {% if bmi != "N/A" %}
+                {% if bmi < 18.5 %} {% set bmi_category="Underweight 🟡" %} {% elif bmi < 24.9 %} {% set
+                    bmi_category="Healthy ✅" %} {% elif bmi < 29.9 %} {% set bmi_category="Overweight 🟠" %} {% else %}
+                    {% set bmi_category="Obese 🔴" %} {% endif %} {% endif %} <div class="flex flex-col items-center">
+                    <span class="text-lg font-semibold">
+                        {{ "%.1f"|format(bmi) if bmi != "N/A" else "N/A" }}
+                    </span>
+                    <span class="text-gray-500 text-sm">BMI</span>
+                    <span
+                        class="text-sm font-medium {% if bmi_category == 'Underweight 🟡' %}text-yellow-500{% elif bmi_category == 'Healthy ✅' %}text-green-600{% elif bmi_category == 'Overweight 🟠' %}text-orange-500{% else %}text-red-600{% endif %}">
+                        {{ bmi_category }}
+                    </span>
+            </div>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="text-lg font-semibold">{{ user.blood_group }}</span>
+            <span class="text-gray-500 text-sm">Blood Group</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="text-lg font-semibold">
+                {{ "Yes" if user.alcohol.lower() == "yes" else "No" }}
+            </span>
+            <span class="text-gray-500 text-sm">Alcohol</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="text-lg font-semibold">
+                {{ "Yes" if user.smoking.lower() == "yes" else "No" }}
+            </span>
+            <span class="text-gray-500 text-sm">Smoking</span>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-lg w-full bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Patient Health Report</h2>
+    <p id="loadingText" class="text-gray-600 text-center animate-pulse">⏳ Generating patient analysis...</p>
+    <div id="report" class="hidden mt-4 text-gray-700 leading-relaxed"></div>
+</div>
+
+<script>
+    async function fetchHealthReport() {
+        try {
+            const response = await fetch('/generate_health_report/1'); // Replace '1' with actual user ID
+            if (!response.ok) throw new Error("Failed to fetch report");
+
+            const data = await response.json();
+            if (data.health_report) {
+                document.getElementById("loadingText").classList.add("hidden");
+                const reportDiv = document.getElementById("report");
+                reportDiv.innerHTML = formatReport(data.health_report);
+                reportDiv.classList.remove("hidden");
+            }
+        } catch (error) {
+            document.getElementById("loadingText").innerText = "❌ Error loading report. Please try again.";
+        }
+    }
+
+    function formatReport(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, "<strong class='text-blue-700'>$1</strong>") // Bold markdown
+            .replace(/\n/g, "<br>"); // New lines
+    }
+
+    window.onload = fetchHealthReport;
+</script>
+
+<!-- Charts Section -->
+<div class="mt-8 bg-white shadow-md rounded-lg p-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Gym Log Chart -->
+        <div class="relative">
+            <h4 class="text-lg font-semibold text-blue-600">🏋️‍♂️ Fitness Analysis</h4>
+            <div class="h-64"> <!-- Fixed height for chart -->
+                <canvas id="gymLogChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Calorie Log Chart -->
+        <div class="relative">
+            <h4 class="text-lg font-semibold text-green-600">🍽️ Diet Analysis</h4>
+            <div class="h-64"> <!-- Fixed height for chart -->
+                <canvas id="calorieLogChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Data from Flask
+    var gymLogData = {{ gym_log | tojson | safe }};
+    var calorieLogData = {{ calorie_log | tojson | safe }};
+
+    // Extracting Dates & Values for Gym Logs
+    var gymDates = gymLogData.map(entry => entry.date_logged);
+    var caloriesBurned = gymLogData.map(entry => entry.calories_burned);
+
+    // Extracting Dates & Values for Calorie Logs
+    var calorieDates = calorieLogData.map(entry => entry.date_logged);
+    var caloriesIntake = calorieLogData.map(entry => entry.calories);
+
+    // Convert timestamps to readable date format
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString();
+    }
+    gymDates = gymDates.map(formatDate);
+    calorieDates = calorieDates.map(formatDate);
+
+    // Gym Log Chart
+    new Chart(document.getElementById("gymLogChart"), {
+        type: "line",
+        data: {
+            labels: gymDates,
+            datasets: [{
+                label: "Calories Burned",
+                data: caloriesBurned,
+                borderColor: "#3B82F6",
+                backgroundColor: "rgba(59, 130, 246, 0.2)",
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Calorie Log Chart
+    new Chart(document.getElementById("calorieLogChart"), {
+        type: "bar",
+        data: {
+            labels: calorieDates,
+            datasets: [{
+                label: "Calories Intake",
+                data: caloriesIntake,
+                backgroundColor: "#10B981",
+                borderColor: "#059669",
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+
+<!-- File Upload Form -->
+<form action="{{ url_for('routes.upload_report', user_id=user.id) }}" method="POST" enctype="multipart/form-data"
+    class="mb-6 bg-white p-4 rounded-lg shadow-md">
+    <input type="file" name="file" class="border p-2 w-full rounded-md">
+    <button type="submit" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+        Upload Report
+    </button>
+</form>
+<div class="bg-white shadow-md rounded-lg p-5">
+    <h3 class="text-xl font-semibold text-gray-700 mt-6">Uploaded Reports</h3>
+    <ul class="mt-4 space-y-3">
+        {% for report in reports %}
+        <li class="p-4 bg-gray-50 shadow-sm rounded-lg border">
+            <p class="text-gray-700">
+                <strong>{{ report.original_filename }}</strong>
+                <br>
+                Uploaded by: <span class="text-blue-600">
+                    {% if report.uploader_id == user.id %}
+                    You
+                    {% else %}
+                    User ID {{ report.uploader_id }}
+                    {% endif %}
+                </span>
+                for <span class="text-green-600">
+                    {% if report.user_id == user.id %}
+                    You
+                    {% else %}
+                    User ID {{ report.user_id }}
+                    {% endif %}
+                </span>
+                on <span class="text-gray-600">{{ report.upload_date.strftime('%d %b %Y, %I:%M %p') }}</span>
+            </p>
+            <a href="{{ url_for('routes.download_report', filename=report.filename) }}"
+                class="text-blue-500 hover:underline">
+                Download
+            </a>
+        </li>
+        {% else %}
+        <p class="text-gray-500">No reports uploaded yet.</p>
+        {% endfor %}
+    </ul>
+</div>
+<br>
+<!-- Gym & Calorie Logs -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Gym Log -->
+    <div class="bg-white shadow-md rounded-lg p-5">
+        <h3 class="text-xl font-semibold text-blue-700 mb-3 flex items-center">
+            🏋️‍♂️ Gym Log
+        </h3>
+        {% if gym_logs %}
+        <ul class="space-y-3">
+            {% for entry in gym_logs %}
+            <li class="p-4 bg-gray-50 shadow-sm rounded-lg border">
+                <span class="text-gray-600">{{ entry.date_logged.strftime('%Y-%m-%d %H:%M') }}</span><br>
+                <strong class="text-gray-800">{{ entry.exercise_type }}</strong>:
+                {% if entry.reps and entry.sets %}
+                <span class="text-blue-600">{{ entry.reps }} reps x {{ entry.sets }} sets</span>
+                {% elif entry.hours %}
+                <span class="text-blue-600">{{ entry.hours }} hours</span>
+                {% endif %}
+                <span class="block text-sm text-gray-500">🔥 {{ entry.calories_burned|round(2) }} kcal burned</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500">No gym logs available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Calorie Log -->
+    <div class="bg-white shadow-md rounded-lg p-5">
+        <h3 class="text-xl font-semibold text-green-700 mb-3 flex items-center">
+            🍽️ Calorie Log
+        </h3>
+        {% if calorie_logs %}
+        <ul class="space-y-3">
+            {% for entry in calorie_logs %}
+            <li class="p-4 bg-gray-50 shadow-sm rounded-lg border">
+                <span class="text-gray-600">{{ entry.date_logged.strftime('%Y-%m-%d %H:%M') }}</span><br>
+                <strong class="text-gray-800">{{ entry.food_item }}</strong>:
+                <span class="text-green-600">{{ entry.calories }} kcal</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500">No calorie logs available.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
